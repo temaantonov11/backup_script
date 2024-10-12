@@ -1,14 +1,13 @@
 #!/bin/bash
 
 
-if [[ $# -ne 3 ]]; then
-        echo "Передай 3 аргумента"
+if [[ $# -ne 2 ]]; then
+        echo "Передай 2 аргумента"
         exit 1
 fi
 
 folder_path="$1"
 percent="$2"
-size="$3"
 
 if [[ ! -d "$folder_path" ]]; then
         echo "Это не путь"
@@ -25,26 +24,23 @@ if [[ "$percent" -lt 1 || "$percent" -gt 100 ]]; then
         exit 1
 fi
 
-if ! [[ "$size" =~ ^[0-9]+$ ]]; then
-        echo "Размер должен быть числом"
-        exit 1
-fi
+size=$(df -h --output=pcent "$folder_path" |tail -1| sed 's/%//g')
 
-size_b=$((("$percent" * "$size" * 1024 * 1024 * 1024)/100))
-folder_size=$(du -sb "$folder_path" | cut -f1)
+
 backup_folder="backup/backup_bin/"
 mkdir -p "$backup_folder"
 
-while [[ "$folder_size" -gt "$size_b" ]]; do
-	oldest_file=$(find "$folder_path" -type f -printf '%T@ %p\n' | sort -n | cut -d' ' -f2 | head -1)
+
+while [[ "$size" -gt "$percent" ]]; do
+	oldest_file=$(sudo find "$folder_path" -type f -printf '%T@ %p\n' | sort -n | cut -d' ' -f2 | head -1)
 	if [[ -z "$oldest_file" ]]; then
 		echo "Нет файлов чтобы архивировать"
 		break
 	fi
-	mv "$oldest_file" "$backup_folder"
-	folder_size=$(du -sb "$folder_path" | cut -f1)
+	sudo mv "$oldest_file" "$backup_folder"
+	size=$(df -h --output=pcent "$folder_path" |tail -1|sed 's/%//g')
 done
 
-tar -czvf "backup/backup_$(date +%Y%m%d_%H%M%S).tar.gz" -C "$backup_folder" .
+tar -czvf "backup/backup_$(date +%Y%m%d_%H%M%S).tar.gz" -C "$backup_folder" . 
 
 rm -r "$backup_folder"
