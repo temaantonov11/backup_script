@@ -3,7 +3,7 @@ main_file="script1.sh"
 
 
 # Путь для тестовых данных
-test_dir="/home/sokolmax/sect"
+test_dir="/home/temaantonov11/lab/sect"
 proposal_backup="./backup"
 
 clean_folder() {
@@ -11,6 +11,8 @@ clean_folder() {
 }
 
 run_test() {
+    # монтируем раздел в исходную папку папки раздел
+    ./create_section.sh "$test_dir"
     local test_name="$1"
     local percent="$2"
     local count_files="$3"
@@ -26,6 +28,8 @@ run_test() {
     echo "Объем папки изначально: $((file_size * count_files)) Mбайт"
     ./script1.sh "$test_dir" "$percent" "$proposal_backup"
     echo "--------------------------"
+    # отмонтируем раздел
+    ./delete_section.sh "$test_dir"
     clean_folder
 }
 
